@@ -1,12 +1,4 @@
-
--- Create database
-CREATE DATABASE dataseeds;
-
--- After creating the database, connect to it
--- In pgAdmin, select the dataseeds database
--- and run the remaining commands.
-
--- USERS
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -17,15 +9,10 @@ CREATE TABLE users (
 
     password_hash TEXT NOT NULL,
 
-    reputation INTEGER DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
-    points INTEGER DEFAULT 0,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
-
--- DATASETS
-
 
 CREATE TABLE datasets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -40,20 +27,27 @@ CREATE TABLE datasets (
 
     target_rows INTEGER,
 
-    visibility VARCHAR(20) DEFAULT 'public',
+    purpose TEXT,
 
-    status VARCHAR(30) DEFAULT 'draft',
+    visibility VARCHAR(20) NOT NULL DEFAULT 'public',
 
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    status VARCHAR(30) NOT NULL DEFAULT 'draft',
 
-    FOREIGN KEY (creator_id)
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_dataset_creator
+        FOREIGN KEY (creator_id)
         REFERENCES users(id)
-        ON DELETE CASCADE
+        ON DELETE CASCADE,
+
+    CONSTRAINT check_visibility
+        CHECK (visibility IN ('public', 'link_only', 'invite_only', 'private')),
+
+    CONSTRAINT check_dataset_status
+        CHECK (status IN ('draft', 'active', 'completed'))
 );
-
-
--- DATASET COLUMNS / SCHEMA
-
 
 CREATE TABLE dataset_columns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -66,75 +60,42 @@ CREATE TABLE dataset_columns (
 
     role VARCHAR(30) NOT NULL,
 
-    required BOOLEAN DEFAULT TRUE,
+    required BOOLEAN NOT NULL DEFAULT TRUE,
 
-    FOREIGN KEY (dataset_id)
+    column_order INTEGER NOT NULL,
+
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_column_dataset
+        FOREIGN KEY (dataset_id)
         REFERENCES datasets(id)
-        ON DELETE CASCADE
-);
-
-
--- TASKS
-
-
-CREATE TABLE tasks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    dataset_id UUID NOT NULL,
-
-    task_type VARCHAR(50) NOT NULL,
-
-    prompt TEXT NOT NULL,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (dataset_id)
-        REFERENCES datasets(id)
-        ON DELETE CASCADE
-);
-
--- CONTRIBUTIONS
-
-
-CREATE TABLE contributions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    task_id UUID NOT NULL,
-
-    user_id UUID NOT NULL,
-
-    status VARCHAR(30) DEFAULT 'pending',
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (task_id)
-        REFERENCES tasks(id)
         ON DELETE CASCADE,
 
-    FOREIGN KEY (user_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
-);
+    CONSTRAINT check_column_type
+        CHECK (
+            data_type IN (
+                'text',
+                'number',
+                'boolean',
+                'category',
+                'image',
+                'audio',
+                'video',
+                'json'
+            )
+        ),
 
--- REVIEWS
+    CONSTRAINT check_column_role
+        CHECK (
+            role IN (
+                'input',
+                'label'
+            )
+        ),
 
+    CONSTRAINT unique_dataset_column_name
+        UNIQUE (dataset_id, name),
 
-CREATE TABLE reviews (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-
-    contribution_id UUID NOT NULL,
-
-    reviewer_id UUID NOT NULL,
-
-    decision VARCHAR(30) NOT NULL,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (contribution_id)
-        REFERENCES contributions(id)
-        ON DELETE CASCADE,
-
-    FOREIGN KEY (reviewer_id)
-        REFERENCES users(id)
-        ON DELETE CASCADE
+    CONSTRAINT unique_dataset_column_order
+        UNIQUE (dataset_id, column_order)
 );
