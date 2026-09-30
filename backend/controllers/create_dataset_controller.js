@@ -1,10 +1,11 @@
 const pool = require("../config/db");
 
-const {createDatasetRecord,} = require("../services/dataset.service");
-const { createDatasetSchema,} = require("../services/schema.service");
-const { createMongoCollection,} = require("../services/mongo.service");
-const { createGenerationWorkflow,} = require("../services/generation.service");
-const {createValidationWorkflow,} = require("../services/validation.service");
+const {createDatasetRecord,} = require("../services/dataset_service");
+const { createDatasetSchema,} = require("../services/schema_service");
+const { createMongoCollection,} = require("../services/mongo_service");
+const {generateDatasetData,} = require("../controllers/dataset_generation_controller");
+const {initializeValidation,}=require("../controllers/validation_controller");
+
 
 
 const createDataset = async (req, res) => {
@@ -56,23 +57,25 @@ const createDataset = async (req, res) => {
 
 
         // STEP 3
-        const generationTasks =
-            await createGenerationWorkflow(
-                client,
-                createdDataset.id,
+      const generationResult =
+            await generateDatasetData({
+                datasetId:
+                    createdDataset.id,
+
+                columns,
+
                 generation,
-                humanPrompts
-            );
+
+                humanPrompts,
+            });
 
 
         // STEP 4
-        const validationWorkflow =
-            await createValidationWorkflow(
-                client,
-                createdDataset.id,
-                validation
-            );
-
+    const validationConfig =
+    await initializeValidation({
+        datasetId: createdDataset.id,
+        validation,
+    });
 
         await client.query("COMMIT");
 
