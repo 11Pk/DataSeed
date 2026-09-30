@@ -4,15 +4,18 @@
   "private": true,
   "scripts": {
     "start": "node ./bin/www",
-     "migrate": "node-pg-migrate up"
+    "migrate": "node-pg-migrate up"
   },
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "cookie-parser": "~1.4.4",
+    "cors": "^2.8.6",
     "debug": "~2.6.9",
     "dotenv": "^18.0.4",
     "express": "~4.16.1",
     "http-errors": "~1.6.3",
     "jade": "~1.11.0",
+    "jsonwebtoken": "^9.0.3",
     "morgan": "~1.9.1",
     "node-pg-migrate": "^9.0.0",
     "pg": "^8.23.0"

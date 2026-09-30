@@ -11,7 +11,8 @@ async function setupDatabase() {
     try {
         console.log("Connected to PostgreSQL");
 
-        const schemaPath = path.join(__dirname, "..", "db", "init.sql");
+        // const schemaPath = path.join(__dirname, "..", "db", "init.sql");
+          const schemaPath = path.join(__dirname, "..", "db", "init2.sql");
 
         const schemaSQL = fs.readFileSync(schemaPath, "utf8");
 
