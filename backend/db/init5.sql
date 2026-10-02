@@ -1,0 +1,4 @@
+ALTER TABLE tasks
+ADD COLUMN submission_id UUID
+REFERENCES submissions(id)
+ON DELETE CASCADE;
