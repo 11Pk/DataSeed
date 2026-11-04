@@ -31,6 +31,7 @@ Return ONLY valid JSON in this format:
 Do not include markdown or explanations.
 `;
 
+
     const response = await ai.models.generateContent({
         model: "gemini-2.5-flash",
         contents: finalPrompt,
